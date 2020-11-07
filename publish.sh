@@ -1,4 +1,4 @@
 #!/bin/bash -e
-git fetch upstream dexie-cloud
-git merge upstream/dexie-cloud -m merge
+git fetch upstream gh-pages
+git merge upstream/gh-pages -m merge
 git push
