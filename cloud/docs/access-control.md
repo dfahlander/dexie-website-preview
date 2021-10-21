@@ -16,6 +16,8 @@ If you are new to Dexie Cloud, please visit the [Dexie Cloud landing page](/clou
 
 If you prefer to jump right in to samples, here some shortcuts:
 
+## Examples
+
 - [Sharable ToDo list](#example-sharable-todo-list)
 - [Simple project managment model](#example-a-simple-project-management-model)
 
@@ -147,7 +149,7 @@ This example shows how to create sharable entities, how to share them and how to
 
 1. **createTodoList()** creates a sharable ToDo list
 2. **shareTodoList()** shares the list to other users
-3. **addTodoItem()** adds a todoItem related to the shared list
+3. **addTodoItem()** adds a todoItem related to the shared list that also inherits sharing.
 
 ```js
 import Dexie from "dexie";
@@ -163,6 +165,9 @@ db.version(2).stores({
   todoItems: '@id, title, done, todoListId',
 
   // Access Control tables
+  // (Note: these tables need to be named exactly like in this sample,
+  //        and will correspond to server-side access control of Dexie
+  //        Cloud)
   realms: '@realmId',
   members: '@id,[realmId+email]',
   roles: '[realmId+name]'
@@ -191,7 +196,7 @@ function createTodoList(listName) {
     // (being owner does not imply having the object synced)
     await db.members.add({
       realmId: newRealmId,
-      userId: db.cloud.currentUser.userId,
+      userId: db.cloud.currentUserId,
       // invite not needed when sharing to yourself.
       // permissions not nescessary as you are the realm owner.
     });
@@ -218,7 +223,7 @@ function shareTodoList(todoList, ...friends) {
     realmId: todoList.realmId,
     email: friend.email,
     name: friend.name,
-    invite: true, // Generates an invite email
+    invite: true, // Generates invite email on server on sync
     permissions: {
       manage: "*" // Give your friend full permissions within this new realm.
     }
@@ -256,8 +261,10 @@ function addTodoItem(todoList, todoTitle) {
 
 Contains the edges between a realm and its members. Each member must have at least a realmId and an email property. Members can be added before the target user even has any user account in the system.
 
-| Table Name | "members" |
-| Primary key | @id |
+
+| Table Name  | "members" |
+|-------------|-----------|
+| Primary key | @id       |
 
 #### Properties of objects in "members" table
 
@@ -497,7 +504,7 @@ function updateComment(commentId, newComment) {
 
 ## The Public Realm
 
-As mentioned before, realms can be created any time, but there are also one "built-in" realm per user, representing the user's private data. Those realms have the same ID as the user's email address. There is also another built-in realm with the id "rlm-public". All users, also unauthenicated users, have visibility / sync access to it. By default, only the owner of the database has permissions to mutate data in the public realm but everyone have access to see and access its data online or offline.
+As mentioned before, realms can be created any time, but there are also one "built-in" realm per user, representing the user's private data. Those realms have the same ID as the user's ID. There is also another built-in realm with the id "rlm-public". All users, also unauthenicated users, have visibility / sync access to it. By default, only the owner of the database has permissions to mutate data in the public realm but everyone have access to see and access its data online or offline.
 
 Public data can either be populated using the REST API or using Dexie.js after having logged in as a user with the right permissions for that, such as the user who created the database - that user is automatically listed as a member in the public realm with full permissions. To add more users that should have access to publish public content, the original member has the permision to add more members to that realm and give fine grained permissions on what type of data the user can add or what fields the user can update.
 

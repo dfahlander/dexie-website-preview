@@ -52,12 +52,12 @@ should not be added to git either but be managed in a secure way using the cloud
 
 ### Example: Integrate Custom Authentication
 
-To integrate with custom authentication, you can either integrate with your existing web server or create a new server endpoint using a authentication framework of your choice, such as Node.js and Passportjs. You need to make that authentication solution you have get a new API endpoint that requests tokens from Dexie Cloud via server-to-server communication. The new server endpoint should accept requests from your dexie-cloud client (requested from your `fetchToken` callback), then it should request the token using server-to-server communication towards the Dexie Cloud REST API, and then return the resulting token to your client.
+Dexie Cloud comes with zero-config email OTP authentication but if you need to replace that with any custom authentication, you can follow this guide. By defining the `fetchToken` configuration parameter, you opt-out from zero-config authentication and control the the authentication flow yourself instead. The `fetchToken` callback needs to return a promise containing the Dexie Cloud token. That token can be retrieved over server-to-server requests towards Dexie Cloud so you will need a server endpoint to do it. You can either integrate with your existing web server or create a new server endpoint using an authentication framework of your choice, such as Node.js and Passportjs. You need to extend the existing server to respond to a new URL (let's use `/dexie-cloud-token`). This new URL endpoint shall request tokens from Dexie Cloud via server-to-server communication using the logged in user and return the Dexie Cloud tokens to its client. The client of your new endpoint will be dexie-cloud client (requested from your `fetchToken` callback).
 
 **Node.js server endpoint**
 
 The code below examplifies how to generate tokens if your authentication solution is based on Node.js and [Passport](http://www.passportjs.org){:target="_blank"}. If you have another server-side platform or language for your existing authentication, you would need to translate this example to that language and platform. Note that the authentication platform (Passport or other) can use whatever mechanism to authenticate the user - integrate with OpenIDConnect, Google, Github, facebook etc. For guides for doing so, we refer to other guides on the internet
-that covers this. If you are starting from a white paper and just need a way to get going, we recommend the guides from [auth0](https://auth0.com){:target="_blank"} or [Passport](http://www.passportjs.org){:target="_blank"}.
+that covers this. If you are starting from a white paper and just need a way to get going, we recommend the guides from [auth0](https://auth0.com){:target="_blank"} or [Passport](http://www.passportjs.org){:target="_blank"} but remember that Dexie Cloud comes with zero config authentication based on one-time-passwords over email, so setting up custom authentication is just an optional next-step. Make sure to get up running Dexie Cloud with zero config authentication first.
 
 ```js 
 // ...other express / passport imports and setup...
@@ -71,12 +71,15 @@ const CLIENT_SECRET = process.env.DEXIE_CLOUD_CLIENT_SECRET;
 // ...other express / passport endpoints here...
 
 // The new endpoint to add:
-app.get('/dexie-cloud-token', async (req, res, next) => {
+app.post('/dexie-cloud-tokens', bodyParser.json(), async (req, res, next) => {
   try {
+    // Parameters that you provide:
     // Assume you've configured passport to store user on request:
-    // See http://www.passportjs.org/docs/configure/
-    const {user} = req;
-
+    const user = req.user; // See http://www.passportjs.org/docs/configure/
+    
+    // Parameters that dexie-cloud client will provide via fetchTokens option.
+    const public_key = req.body.public_key; // For refresh token authentication
+    
     // Request token from your Dexie Cloud database:
     const tokenResponse = await nodeFetch(`${DB_URL}/token`, {
       method: "POST",
@@ -86,15 +89,19 @@ app.get('/dexie-cloud-token', async (req, res, next) => {
       },
       body: JSON.stringify({
         grant_type: "client_credentials",
+        scopes: ["ACCESS_DB"],
+        public_key,
         client_id: CLIENT_ID,
         client_secret: CLIENT_SECRET,
-        sub: user.userId, // or user.email.
-        email: user.email,
-        name: user.name
+        claims: {
+          sub: user.userId, // or user.email. Your framework must provide this.
+          email: user.email, // optional but nice.
+          name: user.name // optional but nice.
+        }
       });
     });
     if (!tokenResponse.ok) {
-      throw new Error(`Failed to retrieve token from Dexie Cloud`);
+      throw new Error(`Failed to retrieve token from Dexie Cloud.`);
     }
 
     // Forward token response to your client:
@@ -109,14 +116,19 @@ app.get('/dexie-cloud-token', async (req, res, next) => {
 
 **fetchToken implementation in your client code**
 
-Assuming that your server endpoint will respond to the path "/dexie-cloud-token" as examplified above (using whatever server side technology you have for that),
+Assuming that your server endpoint will respond to the path "/dexie-cloud-tokens" as examplified above (using whatever server side technology you have for that),
 the client code to integrate it will be:
 
 ```js
 db.cloud.configure({
   databaseUrl: "<database URL>",
   requireAuth: true,
-  fetchToken: () => fetch("/dexie-cloud-token").then(res => res.json())
+  fetchToken: (tokenParams) => fetch("/dexie-cloud-tokens", {
+    method: "post",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(tokenParams)
+  }).then(res => res.json())
 });
 ```
 

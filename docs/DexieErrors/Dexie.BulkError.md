@@ -18,6 +18,7 @@ The method that may throw this error can perform multiple operations on a table.
 
 <table>
 <tr><td>failures</td><td>Array of Error objects of all errors that have occurred</td></tr>
+<tr><td>failuresByPos <i>(since 3.1.0-alpha.7)</i></td><td>Object that maps each failing operation's position to an error</td></tr>
 </table>
 
 ### Properties derived from Error
@@ -31,11 +32,15 @@ The method that may throw this error can perform multiple operations on a table.
 ```javascript
 db.friends.bulkAdd([
     {id: "shouldBeUnique", name: "Foo", age: 99},
-    {id: "shouldBeUnique", name: "Bar", age 21}])
+    {id: "shouldBeUnique", name: "Bar", age: 21}])
 .catch('BulkError', err => {
     err.failures.forEach(failure => {
         console.error (failure.message);
     });
+    // If on dexie@>3.1.0-alpha.6:
+    for (const [pos, error] of Object.entries(err.failuresByPos)) {
+      console.error(`Operation ${pos} failed with ${error}`);
+    }
 });
 ```
 

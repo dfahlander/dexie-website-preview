@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   });
   $('#sign-up-beta-btn').on("click", ()=>{
     $('#signup-form').slideDown(()=>$('#emailAddressInput').focus());
+    if (typeof ga !== "undefined") ga('send', 'event', 'buttons', 'click', 'sign-up-beta-btn');
   });
   $('#applyBetaBtn').on('click', ()=>{
     $('#sign-up-beta-btn').prop("disabled", true);
@@ -53,7 +54,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   });
 
   function postIt (action, data) {
-    return fetch(`https://dexie-cloud-stub.azurewebsites.net/api/public/action/${encodeURIComponent(action)}`, {
+    return fetch(`https://dexie.cloud/api/public/action/${encodeURIComponent(action)}`, {
       method: "POST",
       headers: {
         'Accept': 'application/json',

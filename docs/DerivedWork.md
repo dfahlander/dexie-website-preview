@@ -29,7 +29,7 @@ Did you write something based on Dexie? Feel free to list it here.
 ## Known Addons
 
 * [dexie-encryped](https://github.com/mark43/dexie-encrypted) *Easily add encryption to all non-indexed properties*
-* [dexie-easy-encrypt](https://github.com/jaetask/dexie-easy-encrypt)
+* [dexie-easy-encrypt](https://github.com/jaetask/dexie-easy-encrypt) *Unopinionated encryption middleware with less complexity that let you provide your own encrypt() / decrypt() functions.*
 * [dexie-relationships](https://github.com/ignasbernotas/dexie-relationships) *Declare and query data with foreign keys*
 * [Dexie.Observable](/docs/Observable/Dexie.Observable)
 * [Dexie.Syncable](/docs/Syncable/Dexie.Syncable.js)
@@ -49,6 +49,10 @@ Did you write something based on Dexie? Feel free to list it here.
 
 ## Blogs and Samples
 
+* [Logrocket blog: Using Dexie.js in React apps for offline storage](https://blog.logrocket.com/dexie-js-indexeddb-react-apps-offline-data-storage/)
+* [Using Dexie.js to write slick IndexedDB code](https://dev.to/andyhaskell/using-dexie-js-to-write-slick-indexeddb-code-304o)
+* [Using IndexedDB API with React (and Hooks)](https://levelup.gitconnected.com/using-the-indexeddb-api-with-react-and-hooks-4e63d83a5d1b)
+* [Electron app Database with Dexie.js ( indexedDB ) and web worker](https://gauriatiq.medium.com/electron-app-database-with-dexie-js-indexeddb-and-web-worker-570d9a66a47a)
 * [Open source spotlight / BrowserStack](https://www.browserstack.com/blog/open-source-spotlight-dexie-js-david-fahlander/)
 * [IndexedDB programming with Dexie.js](https://golb.hplar.ch/2018/01/IndexedDB-programming-with-Dexie-js.html) by [Ralph Schaer](https://github.com/ralscha)
 * [Using Dexie.js in a Typescript application](https://golb.hplar.ch/2018/01/Using-Dexie-js-in-a-TypeScript-application.html) by [Ralph Schaer](https://github.com/ralscha)
