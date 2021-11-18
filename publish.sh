@@ -5,5 +5,5 @@ git push
 
 
 # NOTE: To publish a certain branch from upstream:
-# git pull upstream autumn-2021-release
+# git pull upstream autumn-2021-release --commit
 # git push
