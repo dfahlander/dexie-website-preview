@@ -26,7 +26,9 @@ This method is identical to [Collection.and()](/docs/Collection/Collection.and()
 ### Sample
 
 ```javascript
-db.friends.orderBy('age').filter(function (friend) {
-    return friend.name === "Foo";
-});
+const collection = db.friends
+  .orderBy('age')
+  .filter((friend) => /foo/i.test(friend.name));
+  
+const result = await collection.offset(50).limit(25).toArray();
 ```

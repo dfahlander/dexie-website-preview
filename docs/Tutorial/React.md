@@ -11,9 +11,14 @@ title: 'Get started with Dexie in React'
 
 Dexie v3.2 and later comes with reactivity built-in.
 
-In version 3.2 we've introduced **live queries** - queries that observes the result and make your component mirror the data in real time. If a change is made (by the app itself or from an external tab or worker), a binary range tree algorithms will efficiently detect whether those changes would affect your query and, if so, trigger a re-run of your query and re-render the view. [Here's a simple ToDo app example that demonstrates it](https://dexie-todo-list.stackblitz.io).
+In version 3.2 we've introduced **live queries** - queries that observes the result and make your component mirror the data in real time.
+If a change is made (by the app itself or from an external tab or worker), a binary range tree algorithm will efficiently detect whether those changes would affect your queries and if so, re-execute your callback and re-render component.
+[Here's a simple ToDo app example that demonstrates it](https://dexie-todo-list.stackblitz.io).
 
-[useLiveQuery()](/docs/dexie-react-hooks/useLiveQuery()) can be explained like this: **It observes the result of a promise-returning function that queries Dexie** *(In contrast to just execute it imperatively)*. It is very composable as the only thing you have to do is to write normal async functions that queries Dexie in various ways and compute a final result. Maybe you already have some functions you wrote long time ago. Calling them from within the scope of the callback passed to [useLiveQuery()](/docs/dexie-react-hooks/useLiveQuery()) will turn your imperative async functions into an observable query.
+[useLiveQuery()](/docs/dexie-react-hooks/useLiveQuery()) can be explained like this: **It observes the result of a promise-returning function that queries Dexie** *(In contrast to just execute it imperatively)*.
+It is highly composable as you can call other functions that queries dexie and compute a result based on their outcome.
+Maybe you already have some functions you wrote long time ago.
+Calling them from within the scope of the callback passed to [useLiveQuery()](/docs/dexie-react-hooks/useLiveQuery()) will turn your imperative async functions into an observable query.
 
 # 1. Create a React project
 
@@ -63,7 +68,7 @@ db.version(1).stores({
 
 ### Using Typescript?
 
-If you use Typescript, table properties (such as `db.friends`) needs to be explicitely declared on a subclass of Dexie just to help out with the typings for your db instance, its tables and entity models.
+If you use Typescript, table properties (such as `db.friends`) needs to be explicitly declared on a subclass of Dexie just to help out with the typings for your db instance, its tables and entity models.
 
 ```ts
 // db.ts
@@ -164,9 +169,8 @@ export function FriendList() {
 
 Notice two things here:
 
-1. The func
-ion passed to [useLiveQuery()](/docs/dexie-react-hooks/useLiveQuery()) queries dexie for all friends using [toArray()](/docs/Collection/Collection.toArray()).
-2. The result will be undefined on initial render - which explains why we refer it as `friends?` rather than `friends`. The reason for this is the asynchronic nature of IndexedDB. Just be aware of this fact and make sure your rendering code handles it.
+1. The function passed to [useLiveQuery()](/docs/dexie-react-hooks/useLiveQuery()) queries dexie for all friends.
+2. The result will be undefined momentarily before the very initial result arrives - which explains why we refer it as `friends?` rather than `friends`.
 
 
 # 6. Pass some query params

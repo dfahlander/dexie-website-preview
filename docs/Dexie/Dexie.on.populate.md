@@ -3,12 +3,13 @@ layout: docs
 title: 'Dexie.on.populate'
 ---
 
-_API changed since 0.9.8 but is still backward compatible. To view the old documentation, see [Dexie.on.populate (old version)](/docs/Dexie/Dexie.on.populate-(old-version)). The difference is that there is no more need to provide a [Transaction](/docs/Transaction/Transaction) instance as argument to the callback. But for backward compatibility we still do._
-
 ### Syntax
 
-```javascript
-db.on("populate", function () {});
+```ts
+db.on("populate", (tx: Transaction) => {
+  // Use provided transaction to populate database with initial data
+  // tx.table('users').add({id: "me", name: "Me"});
+});
 ```
 
 ### Description
@@ -23,9 +24,9 @@ The populate event is fired during an onupgradeneeded event and before db.open()
 
 ```javascript
 var db = new Dexie("MyDB");
-db.version(1).stores({friends: "id++,name,gender"});
-db.on("populate", function() {
-    db.friends.add({name: "Josephina", gender: "unisex"});
+db.version(1).stores({friends: "++id, name, gender"});
+db.on("populate", function(transaction) {
+    transaction.friends.add({name: "Josephina", gender: "unisex"});
 });
 db.open();
 ```
@@ -33,6 +34,8 @@ db.open();
 ### Limitations
 
 The transaction running when the populate event is firing is an upgrade transaction and as all IndexedDB transactions, it will commit as soon as you stop using it. This means that if you call other async APIs, such as ajax calls or setTimeout(), the transaction object will automatically commit and your database will finish opening. When you ajax request as arrives, you are not anymore within the upgrade transaction.
+
+**NOTE: If the callback is an async function, make sure to use the provided transaction rather than the Dexie instance (see above sample). **
 
 If your aim is to populate the database from an ajax- or other asyncronic request, the only bullet-proof way to do that is by using the on('ready') event rather than on('populate'). See a working (and fully tested) sample below:
 
@@ -43,11 +46,11 @@ This sample shows how to populate your database from an ajax call. Note that on(
 ```javascript
 var db = new Dexie('someDB');
 db.version(1).stores({
-    someTable: "++id,someIndex"
+    someTable: "++id, someIndex"
 });
 
 // Populate from AJAX:
-db.on('ready', function () {
+db.on('ready', function (db) {
     // on('ready') event will fire when database is open but 
     // before any other queued operations start executing.
     // By returning a Promise from this event,
@@ -126,7 +129,7 @@ Found object: {"someIndex":"item2","id":2}
 Finished.
 ```
 
-[Watch the full HTML source](https://github.com/dfahlander/Dexie.js/blob/master/samples/ajax-populate/populateFromAjaxCall.html), or [view it in your browser](https://raw.githack.com/dfahlander/Dexie.js/master/samples/ajax-populate/populateFromAjaxCall.html)
+[Watch the full HTML source](https://github.com/dexie/Dexie.js/blob/master/samples/ajax-populate/populateFromAjaxCall.html), or [view it in your browser](https://raw.githack.com/dexie/Dexie.js/master/samples/ajax-populate/populateFromAjaxCall.html)
 
 ### See Also
 

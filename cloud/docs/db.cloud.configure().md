@@ -2,7 +2,7 @@
 layout: docs-dexie-cloud
 title: "db.cloud.configure()"
 ---
-Configure the URL of the database to keep in sync with.
+Configure the URL of the database to keep in sync with, along with other options.
 
 ## Syntax
 
@@ -10,7 +10,7 @@ Configure the URL of the database to keep in sync with.
 npm install dexie-cloud-addon
 ```
 
-```js
+```ts
 import Dexie from "dexie";
 import dexieCloud from "dexie-cloud-addon";
 
@@ -20,39 +20,121 @@ db.version(x).stores({
   ...
 });
 
+db.cloud.configure(options: DexieCloudOptions);
+```
+
+See interface [DexieCloudOptions](DexieCloudOptions)
+
+## Example
+
+```ts
+import Dexie from "dexie";
+import dexieCloud from "dexie-cloud-addon";
+
+const db = new Dexie("mydb", {addons: [dexieCloud]});
+db.version(1).stores({
+  friends: `@id, name, age`
+});
+
 db.cloud.configure({
-  databaseUrl: "<database URL>",
-  requireAuth: true | false,
-  fetchToken?: customTokenFetcher
+  databaseUrl: "https://xxxxxx.dexie.cloud", // Create DB: `npx dexie-cloud create`
 });
 ```
 
 ## Remarks
 
-The call to db.cloud.configure() must be done before any requests are put on the `db` (the Dexie instance) so that the database knows what to do when before opening it the first time. See [Sync flow](dexie-cloud-addon#sync-flow).
+The call to db.cloud.configure() must be done before any requests are put on the `db` (the Dexie instance) so that the database knows what to do when before opening it the first time.
 
 ## Parameters
 
 | Parameter   | Type     | Explanation                                        |
 | ----------- | -------- | -------------------------------------------------- |
-| databaseUrl | string   | The URL to your cloud database                     |
-| requireAuth | boolean  | Whether or not to require authentication initially |
-| fetchToken  | function | Custom token fetching callback                     |
+| databaseUrl | string   | The URL to your Dexie Cloud database               |
+| requireAuth | boolean  | Whether or not to require authentication initially or allow unauthorized usage with option to login when needed. A value of false enables unauthorized shopping basket example with possibility to authenticate to get the data become connected to user account. |
+| tryUseServiceWorker | boolean | Let service worker take care of the sync job. See [tryUseServiceWorker](#tryuseserviceworker) below.  |
+| periodicSync | `{minInterval: number}` | The minimum interval time, in milliseconds, at which the service-worker's periodic sync should occur. See <https://github.com/WICG/background-sync/blob/main/explainers/periodicsync-explainer.md#timing-of-periodic-sync-tasks> |
+| customLoginGui | boolean | Disable default login GUI and replace it with your own by subscribing to the `db.cloud.userInteraction` observable and render its emitted data. |
+| unsyncedTables | string[] | Array of table names that should be considered local-only and not be synced with Dexie Cloud |
+| nameSuffix | boolean | See [nameSuffix](<#namesuffix>) below |
+| disableWebSocket | boolean | Disable websocket connection. This will disable listening of server changes and only sync when there is a client change. You can manually call `db.cloud.sync({purpose: 'pull'})` periodically as an alternative to using the WebSocket connection. |
+| fetchTokens | Callback | Provide JWT tokens customly. Enables custom authentication. See [full client- and server example here](#example-integrate-custom-authentication).
 
-## requireAuth
+See the Typescript definition of this parametered object argument to get the typing details: [DexieCloudOptions](DexieCloudOptions).
 
-If this parameter is true, the system will make sure there it has a valid authentication token before before any call to the database can proceed. In practice, this means that the user will be required to authenticate the very first time app is used on the device. Authentication token will be securely cached for 3 months unless user logs out prior to that. If looking at your progressive web app as if it was a native app, regard the authentication as a part of the installation process. Once installed, the app should continue working as expected without the need of reauthentication. This policy will be configurable in a later version. We will also be looking at ways to separate the authentication policy for read and write - you might always be able to access data, but in order to mutate data you could apply a different policy with requiring reauthentication.
+### requireAuth
 
-## fetchToken
+If this parameter is true, the system will make sure there it has a valid authentication token before before any call to the database can proceed. In practice, this means that the user will be required to authenticate the very first time app is used on the device. Authentication token will be securely persistently stored until user logs out. If looking at your progressive web app as if it was a native app, regard the authentication as a part of the installation process. Once installed, the app should continue working as expected without the need of reauthentication. This policy will be configurable in a later version. We will also be looking at ways to separate the authentication policy for read and write - you might always be able to access data, but in order to mutate data you could apply a different policy with requiring reauthentication.
 
-Implement your own way of retrieving a dexie-cloud token. By default, this token will be generated by Dexie Cloud server by providing email and OTP to it.
+### tryUseServiceWorker
+
+This option will make dexie-cloud-addon look for a service worker registration, and if it finds it, delegate all sync jobs to the service worker including background and periodic sync.
+
+For `tryUseServiceWorker` option to have any effect, you must also register a service worker and importScripts("dexie-cloud-addon/dist/umd/service-worker[.min].js") from it. Service worker enables changes to be queued and synced also when your application is closed. It also allows for periodic background sync if user has Chrome and adds your progressive web app to home screen (installs it).
+
+#### Background Sync
+
+Dexie Cloud takes advantage of Service Worker Background Sync. It makes it possible to sync your local changes to the server even after the app has closed. Think chat application. You're on mobile and write a message and click send, but your network is flaky or down. Then, you close the phone and put it in your pocket. Some time later on, the phone detects a healthy network. At this point, your chat message will sync and reach the other participants. If it wasn't for background sync, your chat message would still have been queued in IndexedDB, but not actively synced until you'd open up the app again.
+
+#### Periodic Sync
+
+Periodic Sync is also a service worker feature. It makes it possible to pull remote changes from a server even when the app is not open. Think weather app... You take up your phone and click the weather app and get an up-to-date weather report despite being offline! This is because you were online 2 hours ago while walking with the phone in your pocket and periodic sync kicked in and did a pull sync from the server, retrieving a recent weather report prepared for you.
+
+Periodic sync registration will only be active when the PWA is actually installed on the user device (and as of may 2022, only works in Chrome). However, periodic sync is normally not a crucial feature, but quite nice to have as it can keep the offline database up-to-date before user starts interacting with the app. 
+
+#### Dexie Cloud without Sevice Worker
+Service Worker enables Background Sync and Periodic Sync (and a bunch of other features not covered here). But life is not so hard without it anyway. Dexie Cloud works very well without a service worker. As long as the application is open and the user is active, it will keep a bidirectional eager sync connection to the server. Any change on the client will eagerly sync to server and any change on the server will be eagerly sent to the client over its websocket connection. The only downside with not using service worker is that it will only sync while application is open and never be able to sync in the background when the app is closed and phone is in your pocket.
+
+#### Enable Service Worker With plain JS
+
+Create your own service worker JS file. It can be a simple file named 'sw.js' and let it import dexie-cloud's service worker code:
+
+```js
+importScripts ('<path to...>/dexie-cloud-addon/dist/umd/service-worker.js');
+```
+
+You can then extend your sw.js service worker for other purposes as well, such as caching etc, but for dexie-cloud to use it for sync, only the above single line will be needed.
+
+Somewhere in your app code, register your service worker:
+
+```js
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js')
+}
+```
+
+Then where you configure dexie cloud, use the option `{tryUseServiceWorker: true}`.
+
+#### Enable Service Worker With `create-react-app`
+
+For those who use [create-react-app](https://create-react-app.dev/docs/making-a-progressive-web-app/), run it with option `--template cra-template-pwa` or `--template cra-template-pwa-typescript` to get the service worker setup for you with a nice template for a full progressive web app including a PWA manifest etc so that your app becomes installable at peoples devices. Then add the following line to the top of the generated `service-worker.js` or `service-worker.ts` of your app:
+
+```ts
+// Import Dexie Cloud Service Worker
+import "dexie-cloud-addon/dist/umd/service-worker";
+```
+
+Also, in `index.jsx` / `index.tsx`, change the line `serviceWorkerRegistration.unregister();` to `serviceWorkerRegistration.register();` as described by [the docs from create-react-app](https://create-react-app.dev/docs/making-a-progressive-web-app/).
+
+#### Only for Production Builds
+
+Service workers are great for production but can be confusing while developing and debugging an application - specifically because they do not update unless you close down all instances of your application and reopen it. If you used create-react-app to generate the service worker, it will automatically turn off service worker when starting the dev version of your app but activates it in its production build.
+
+### nameSuffix
+
+By default Dexie Cloud will append part of the given `databaseURL` to your IndexedDB database name. `'FriendsDatabase'` becomes `'FriendsDatabase-z0lesejpr'` or similar (last part is the ID part from your database URL). The reason it does this is to make your local IndexedDB database unique per database URL and so that vanilla Dexie databases can coexist with a cloud-connected database even when they specify the same name in their constructor. Likewise, if the databaseUrl is changed to another remote database, it will not try to connect the same local database to match the new remote one.
+
+The `nameSuffix` option is considered `true` by default, so in order to disable it, you must explicitely set `nameSuffix` option to `false`.
+By specifying `{nameSuffix: false}`, Dexie will name the database without appending a suffix - the same way as it does in plain Dexie.js.
+### fetchTokens
+
+Specify a callback here if you want to implement your own way of retrieving the JWT tokens. By default, these tokens will be generated by Dexie Cloud server.
 But your application may have its own way of authenticating users, or integrate with a 3rd part authentication provider. In that case you will need to implement
-your own server-side endpoint on a server that can authenticate your user. That server endpoint (who known your user's identity) can then request a token from Dexie Cloud without requiring the OTP step. This needs to happen server-side because in order to request a token without going through the OTP step will require the REST client to provide your client_id and client_secret in the request. You have client_id and client_secret in the dexie-cloud.key file that was generated when you created the database. These shall never be used from client side. The key file
+your own server-side endpoint on a server that can authenticate your user. That server endpoint (who known your user's identity) can then request a token from Dexie Cloud without requiring the OTP step. This needs to happen server-side because in order to request a token without going through the OTP step will require the REST client to provide your client_id and client_secret in the request. You have client_id and client_secret in the dexie-cloud.key file that was generated when you created the database (using `npx dexie-cloud create`). These keys shall never be used from client side. The key file
 should not be added to git either but be managed in a secure way using the cloud infrastructure of your own choice.
 
 ### Example: Integrate Custom Authentication
 
-Dexie Cloud comes with zero-config email OTP authentication but if you need to replace that with any custom authentication, you can follow this guide. By defining the `fetchToken` configuration parameter, you opt-out from zero-config authentication and control the the authentication flow yourself instead. The `fetchToken` callback needs to return a promise containing the Dexie Cloud token. That token can be retrieved over server-to-server requests towards Dexie Cloud so you will need a server endpoint to do it. You can either integrate with your existing web server or create a new server endpoint using an authentication framework of your choice, such as Node.js and Passportjs. You need to extend the existing server to respond to a new URL (let's use `/dexie-cloud-token`). This new URL endpoint shall request tokens from Dexie Cloud via server-to-server communication using the logged in user and return the Dexie Cloud tokens to its client. The client of your new endpoint will be dexie-cloud client (requested from your `fetchToken` callback).
+Dexie Cloud comes with zero-config email OTP authentication but if you need to replace that with any custom authentication, you can follow this guide. By defining the `fetchTokens` configuration parameter, you opt-out from zero-config authentication and control the the authentication flow yourself instead. The `fetchTokens` callback needs to return a promise containing the Dexie Cloud token. That token can be retrieved over server-to-server requests towards Dexie Cloud so you will need a server endpoint to do it. You can either integrate with your existing web server or create a new server endpoint using an authentication framework of your choice, such as Node.js and Passportjs. You need to extend the existing server to respond to a new URL (You can name the route what you want but in our example, we'll use `/dexie-cloud-tokens`). This new URL endpoint shall request tokens from Dexie Cloud via server-to-server communication using the logged in user and return the Dexie Cloud tokens to its client. The client of your new endpoint will be the browser where your dexie based app resides, and it will request server in the callback you configured in the `fetchTokens` option.
 
 **Node.js server endpoint**
 
@@ -98,7 +180,7 @@ app.post('/dexie-cloud-tokens', bodyParser.json(), async (req, res, next) => {
           email: user.email, // optional but nice.
           name: user.name // optional but nice.
         }
-      });
+      })
     });
     if (!tokenResponse.ok) {
       throw new Error(`Failed to retrieve token from Dexie Cloud.`);
@@ -114,7 +196,7 @@ app.post('/dexie-cloud-tokens', bodyParser.json(), async (req, res, next) => {
 });
 ```
 
-**fetchToken implementation in your client code**
+**fetchTokens implementation in your client code**
 
 Assuming that your server endpoint will respond to the path "/dexie-cloud-tokens" as examplified above (using whatever server side technology you have for that),
 the client code to integrate it will be:
@@ -123,7 +205,7 @@ the client code to integrate it will be:
 db.cloud.configure({
   databaseUrl: "<database URL>",
   requireAuth: true,
-  fetchToken: (tokenParams) => fetch("/dexie-cloud-tokens", {
+  fetchTokens: (tokenParams) => fetch("/dexie-cloud-tokens", {
     method: "post",
     credentials: "same-origin",
     headers: { "Content-Type": "application/json" },

@@ -41,7 +41,7 @@ await importInto(db, blob, [options]);
 // performing any import operation
 // (since v1.0.0)
 //
-const importMeta = await peekImportFile(blob);
+const importMeta = await peakImportFile(blob);
 assert.areEqual(importMeta.formatName, "dexie");
 assert.isTrue(importMeta.formatVersion === 1);
 console.log("Database name:", importMeta.data.databaseName);
@@ -84,6 +84,8 @@ await db.import(blob, [options]); // equivalent to importInto()
 
 Even though this sample doesn't show it, blobs can also be sent or retrieved to/from a server, using the [fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API). 
 
+[Here's a blog article](https://dfahlander.medium.com/export-indexeddb-from-a-web-app-using-devtools-62c55a8996a1) on how to export IndexedDB from DevTools on an arbritary web page or web app, by dynamically including dexie and dexie-export-import in the devtools console.
+
 # Features
 
 * Export of IndexedDB Database to JSON Blob.
@@ -104,7 +106,7 @@ Even though this sample doesn't show it, blobs can also be sent or retrieved to/
 
 | Product | Supported versions        |
 | ------- | ------------------------- |
-| dexie   | ^2.0.4 or ^3.0.0-alpha.5  |
+| dexie   | ^2.0.4, ^3.x, ^4.x        |
 | Safari  | ^10.1                     |
 | IE      | 11                        |
 | Edge    | any version               |
@@ -357,10 +359,9 @@ async function importDatabase(file) {
 
 This feature has been asked for a lot:
 
-* https://github.com/dfahlander/Dexie.js/issues/391
-* https://github.com/dfahlander/Dexie.js/issues/99
+* https://github.com/dexie/Dexie.js/issues/391
+* https://github.com/dexie/Dexie.js/issues/99
 * https://stackoverflow.com/questions/46025699/dumping-indexeddb-data
-* https://feathub.com/dfahlander/Dexie.js/+9
 
 My simple answer initially was this:
 

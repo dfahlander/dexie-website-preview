@@ -5,7 +5,7 @@ title: 'Get started with Dexie in Vue'
 {% raw %}
 
 <div style="opacity: 0.8; padding: 40px 0 40px 0">
-  <img src="/assets/images/Vue.svg" style="width:50px;margin: 0 10px 0 0">
+  <img src="/assets/images/vue.svg" style="width:50px;margin: 0 10px 0 0">
   <span>+</span>
   <img src="/assets/images/logo-dexie-black.svg" style="width: 200px;">    
 </div>
@@ -72,7 +72,7 @@ export const db = new MySubClassedDexie();
 
 Writing to the database can be done using [Table.add()](/docs/Table/Table.add()), [Table.put()](/docs/Table/Table.put()), [Table.update()](/docs/Table/Table.update()) and [Collection.modify()](/docs/Collection/Collection.modify()) - see Dexie's [quick reference](/docs/API-Reference#add-items) for examples. Here we're gonna create a simple Vue component that allows the user to add friends into the database using [Table.add()](/docs/Table/Table.add()).
 
-```svelte
+```vue
 <!-- FriendAdder.vue -->
 <template>
   <fieldset>
@@ -97,11 +97,17 @@ import { db } from '../db';
 
 export default {
   name: 'FriendAdder',
+  props: {
+    defaultAge: {
+      type: Number,
+      default: 21,
+    },
+  },
   data: () => {
     return {
       status: '',
       friendName: '',
-      friendAge: 21,
+      friendAge: this.defaultAge,
     };
   },
   methods: {
@@ -118,10 +124,10 @@ export default {
 
         // Reset form:
         this.friendName = '';
-        this.friendAge = defaultAge;
+        this.friendAge = this.defaultAge;
       } catch (error) {
         this.status = `Failed to add
-          ${friendName}: ${error}`;
+          ${this.friendName}: ${error}`;
       }
     },
   },
@@ -143,12 +149,12 @@ npm install @vueuse/rxjs
 
 Note that there are other ways to consume observables in vue - such as manually subscribe and unsubscribe in the lifecycle hooks if you prefer.
 
-```svelte
+```vue
 <!-- FriendList.vue -->
 <template>
   <ul>
     <li v-for="friend in friends" :key="friend.id">
-      {{ friend.name }}, {{ item.age }}
+      {{ friend.name }}, {{ friend.age }}
     </li>
   </ul>
 </template>
@@ -163,7 +169,7 @@ Note that there are other ways to consume observables in vue - such as manually 
     setup() {
       return {
         db,
-        items: useObservable(
+        friends: useObservable(
           liveQuery(() => db.friends.toArray())
         ),
       };

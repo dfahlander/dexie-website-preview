@@ -24,11 +24,11 @@ Did you write something based on Dexie? Feel free to list it here.
 * [Wire](https://wire.com) - An end-to-end encrypted chat application.
 * [Medical Physics Quality Assurance Tool](http://electrons.simonbiggs.net/) -- Built with Typescript2, Angular2, Dexie2, Bokehjs, on Github Pages (Client) and Heroku (RestAPI). [Source Code](https://github.com/SimonBiggs/electroninserts-webapp).
 * [Memex](https://worldbrain.io) - Open source browser extension providing full-text search on bookmarks and history.
-* [more than 4000 other repos on GitHub](https://github.com/dfahlander/Dexie.js/network/dependents?package_id=UGFja2FnZS0xMzg0ODIyOQ%3D%3D)...
+* [more than 8000 other repos on GitHub](https://github.com/dexie/Dexie.js/network/dependents?package_id=UGFja2FnZS0xMzg0ODIyOQ%3D%3D)...
 
 ## Known Addons
 
-* [dexie-encryped](https://github.com/mark43/dexie-encrypted) *Easily add encryption to all non-indexed properties*
+* [dexie-encrypted](https://github.com/mark43/dexie-encrypted) *Easily add encryption to all non-indexed properties*
 * [dexie-easy-encrypt](https://github.com/jaetask/dexie-easy-encrypt) *Unopinionated encryption middleware with less complexity that let you provide your own encrypt() / decrypt() functions.*
 * [dexie-relationships](https://github.com/ignasbernotas/dexie-relationships) *Declare and query data with foreign keys*
 * [Dexie.Observable](/docs/Observable/Dexie.Observable)

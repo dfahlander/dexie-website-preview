@@ -9,11 +9,17 @@ title: 'Get started with Dexie in Svelte'
   <img src="/assets/images/logo-dexie-black.svg" style="width: 200px;">    
 </div>
 
-Dexie v3.2 and later comes with reactivity built-in.
+Dexie v4.x comes with the best Svelte- and Sveltekit support.
 
-In version 3.2 we've introduced **live queries** - queries that observes the result and make your component mirror the data in real time. If a change is made (by the app itself or from an external tab or worker), a binary range tree algorithms will efficiently detect whether those changes would affect your query and, if so, trigger a re-run of your query and re-render the view. [Here's a sample app demonstrates it](https://2n8bd.csb.app/).
+In version 3.2 we've introduced **live queries** - queries that observes the result and make your component mirror the data in real time and in version 4.0.1-alpha.10 we improved the typing compability and SvelteKit support of liveQuery().
 
-[liveQuery()](/docs/liveQuery()) can be explained like this: **It observes the result of a promise-returning function that queries Dexie** *(In contrast to just execute it imperatively)*. It is very composable as the only thing you have to do is to write normal async functions that queries Dexie in various ways and compute a final result. Maybe you already have some functions you wrote long time ago. Calling them from within the scope of the callback passed to [liveQuery()](/docs/liveQuery()) will turn your imperative async functions into an Observable, which also complies with the Svelte Store specification.
+If a change is made (by the app itself or from an external tab or worker), a binary range tree algorithm will efficiently detect whether those changes would affect your queries and if so, re-execute your callback and re-render component.
+[Here's a sample app demonstrates it](https://2n8bd.csb.app/).
+
+[liveQuery()](/docs/liveQuery()) can be explained like this: **It observes the result of a promise-returning function that queries Dexie** *(In contrast to just execute it imperatively)*.
+It is highly composable as you can call other functions that queries dexie compute a result based on their outcome.
+Maybe you already have some functions you wrote long time ago.
+Calling them from within the scope of the callback passed to [liveQuery()](/docs/liveQuery()) will turn your imperative async functions into an Observable, which also complies with the Svelte Store specification.
 
 # 1. Create a Svelte project
 
@@ -24,8 +30,10 @@ Here we refer to Svelte's own [Getting Started](https://svelte.dev/blog/the-easi
 # 2. Install dexie
 
 ```
-npm install dexie
+npm install dexie@next
 ```
+
+*Svelte and SvelteKit users are recommended to install `dexie@next` which gives you version 4.x, as it contains Svelte compatible typings and SSR friendly `liveQuery()`*
 
 # 3. Create a file `db.js` (or `db.ts`)
 
@@ -44,11 +52,11 @@ db.version(1).stores({
 
 ### Using Typescript?
 
-If you use Typescript, table properties (such as `db.friends`) needs to be explicitely declared on a subclass of Dexie just to help out with the typings for your db instance, its tables and entity models.
+If you use Typescript, table properties (such as `db.friends`) needs to be explicitly declared on a subclass of Dexie just to help out with the typings for your db instance, its tables and entity models.
 
 ```ts
 // db.ts
-import Dexie, { Table } from 'dexie';
+import Dexie, { type Table } from 'dexie';
 
 export interface Friend {
   id?: number;
@@ -72,6 +80,7 @@ export class MySubClassedDexie extends Dexie {
 export const db = new MySubClassedDexie();
 
 ```
+*See also [issue 1560](https://github.com/dexie/Dexie.js/issues/1560) containing a solution to improve typings for `liveQuery()` in case you want a more precise typings of the '$' vars.*
 
 # 4. Create a component that adds some data
 
@@ -159,8 +168,8 @@ Write a simple component that just renders all friends in the database.
 
 Notice two things here:
 
-1. liveQuery() returns a reactive Svelte Store (or actually an Observable that happens to comply with the [The Svelte Store Contract](https://svelte.dev/docs#Store_contract)). To access the reactive value of a Svelte Store, friends needs to be prefixed with $, `$friends`.
-2. The result will be undefined on initial render - which explains why we need the `{#if $friends}` condition. The reason for this is the asynchronic nature of IndexedDB. Just be aware of this fact and make sure your rendering code handles it.
+1. liveQuery() returns a reactive Svelte Store (or actually an Observable that happens to comply with the [The Svelte Store Contract](https://svelte.dev/docs#component-format-script-4-prefix-stores-with-$-to-access-their-values)). To access the reactive value of a Svelte Store, friends needs to be prefixed with $, `$friends`.
+2. The result will be undefined momentarily before the very initial result arrives - which explains why we need the `{#if $friends}` condition.
 
 # 6. Pass some query params
 

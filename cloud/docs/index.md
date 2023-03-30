@@ -8,7 +8,9 @@ This area is for documentation of Dexie Cloud APIs
 * [Getting started](/cloud/#getting-started)
 * [Authentication](/cloud/docs/authentication)
 * [Access Control](/cloud/docs/access-control)
+* [Consistency](/cloud/docs/consistency)
 * [dexie-cloud-addon](dexie-cloud-addon)
+* [Client-side API](dexie-cloud-addon#api)
 * [REST API](rest-api)
 * [CLI docs](cli)
 

@@ -7,12 +7,18 @@ title: 'useLiveQuery()'
 
 Observe IndexedDB data in your React component. Make the component re-render when the observed data changes.
 
+# See Also
+
+[liveQuery()](https://dexie.org/docs/liveQuery())
+
 # Dependencies
 
 ```
-npm i react
-npm i dexie@latest
-npm i dexie-react-hooks
+npm i react dexie dexie-react-hooks
+```
+or
+```
+yarn add react dexie dexie-react-hooks
 ```
 
 # Syntax
@@ -37,6 +43,10 @@ export function useLiveQuery<T, TDefault=undefined> (
 
 * Don't call asynchronic API:s from it except Dexie's APIs.
 * If you really need to call other async API's (such as fetch() or webCrypto), wrap the returned promise through `Promise.resolve()`. There's an example later in this page on how to do that.
+
+# Safari Support
+
+Safari 15.3 and older does not support [BroadcastChannel](https://caniuse.com/broadcastchannel) requied to make useLiveQuery() react to changes written from Web Workers. However, it will react to changes performed in a Service Worker. There are two small snippets that you can use to make it work with Web Workers also for older Safari browsers, see [Dexie.on.storagemutated#supporting-safari-153-and-below](/docs/Dexie/Dexie.on.storagemutated#supporting-safari-153-and-below).
 
 # Simple Example
 
@@ -72,7 +82,7 @@ export function OldFriendsList() {
 
 ## Persistent State Manager
 
-The `useLiveQuery()` hook does not only load data - it *observes* the query for changes. This means that you can use Dexie as a persistent state manager in your React application. If you add, update or delete a friend using Dexie methods for that (such as [Table.add](../Table/Table.add()), [Table.update()](../Table/Table.update()), [Table.delete()](../Table/Table.delete()), ...etc), any component that observes the affected data will automatically rerender.
+The `useLiveQuery()` hook does not only load data - it *observes* the query for changes. This means that you can use Dexie as a persistent and RAM-sparse state manager in your React application since you don't keep entire database in RAM. If you add, update or delete a friend using Dexie methods for that (such as [Table.add](../Table/Table.add()), [Table.update()](../Table/Table.update()), [Table.delete()](../Table/Table.delete()), ...etc), any component that observes the affected data will automatically rerender.
 
 ## Fine grained observation
 
@@ -183,7 +193,7 @@ function App () {
 
 # Calling non-Dexie API:s from querier
 
-If your querier callback needs to call asynchronous non-Dexie APIs to resolve its result, the promises returned by those non-Dexie API:s needs to be wrapped using `Promise.resolve()`. This is needed in order to keep the observation context alive between async calls. Even though APIs like `fetch()`, `webCrypto` etc already returns promises, this is still needed in order for useLiveQuery() to function properly. It might feel unnescessary to wrap it with `Promise.resolve()` when it's already a promise being returned, but this is a rule that needs to be followed when using `useLiveQuery()` with non-Dexie APIs. As of Dexie 3.1.0, you might not notice any warning or error if not following this rule but in a future version of Dexie, it might start throwing some explanatory error if this rule has been forgotten. 
+If your querier callback needs to call asynchronous non-Dexie APIs to resolve its result, the promises returned by those non-Dexie API:s needs to be wrapped using `Promise.resolve()`. This is needed in order to keep the observation context alive between async calls. Even though APIs like `fetch()`, `webCrypto` etc already returns promises, this is still needed in order for useLiveQuery() to function properly. It might feel unnescessary to wrap it with `Promise.resolve()` when it's already a promise being returned, but this is a rule that needs to be followed when using `useLiveQuery()` with non-Dexie APIs. As of Dexie 3.2.0, you might not notice any warning or error if not following this rule but in a future version of Dexie, it might start throwing some explanatory error if this rule has been forgotten. 
 
 ```js
 function MyComponent(id) {
@@ -223,5 +233,8 @@ function MyComponent(id) {
 
 # See also
 
+[liveQuery()](/docs/liveQuery())
+
 [A blog post about this](https://medium.com/dexie-js/awesome-react-integration-coming-f212c2273d05)
 
+[Dexie.on.storagemutated](/docs/Dexie/Dexie.on.storagemutated)
